@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 const allCategories = ["All", "Soups", "Salads", "Starters"];
 const subcategories = ["All", "Tandoori", "Italian", "World"];
 
-export default function MenuPage() {
+function MenuInner() {
   const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
@@ -239,5 +239,17 @@ export default function MenuPage() {
         </motion.div>
       )}
     </div>
+  );
+}
+
+export default function MenuPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen pt-24 pb-24 flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[#C9A84C] border-t-transparent rounded-full" />
+      </div>
+    }>
+      <MenuInner />
+    </Suspense>
   );
 }
