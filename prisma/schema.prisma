@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MenuItem {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  price        Int
+  category     String
+  subcategory  String
+  isJain       Boolean  @default(false)
+  isPopular    Boolean  @default(false)
+  image        String?
+  isAvailable  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderItems   OrderItem[]
+}
+
+model Reservation {
+  id              String   @id @default(cuid())
+  name            String
+  email           String
+  phone           String
+  date            String
+  time            String
+  guests          Int
+  specialRequests String?
+  status          String   @default("confirmed")
+  advancePaid     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  orderType     String
+  name          String
+  phone         String
+  email         String
+  address       String?
+  city          String?
+  pincode       String?
+  notes         String?
+  subtotal      Int
+  deliveryFee   Int
+  platformFee   Int
+  total         Int
+  status        String   @default("pending")
+  paymentStatus String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items         OrderItem[]
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  menuItemId String
+  quantity  Int
+  price     Int
+  notes     String?
+
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id])
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  src       String
+  alt       String
+  category  String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  rating    Int      @default(5)
+  text      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model BlockedDate {
+  id        String   @id @default(cuid())
+  date      String
+  reason    String?
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
