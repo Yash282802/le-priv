@@ -215,7 +215,7 @@ export default function ReservationPage() {
                       min={getMinDate()}
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C]"
+                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C] [&::-webkit-calendar-picker-indicator]:invert"
                     />
                   </div>
                   <div>
