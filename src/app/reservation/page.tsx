@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Clock, Users, Phone, Mail, User, CheckCircle, AlertCircle } from "lucide-react";
+import { Calendar, Clock, Users, Phone, Mail, User, CheckCircle, AlertCircle, CreditCard, Loader2 } from "lucide-react";
 import { restaurantInfo } from "@/data/menu";
 
 const timeSlots = [
@@ -11,7 +11,10 @@ const timeSlots = [
   "9:00 PM", "9:30 PM", "10:00 PM"
 ];
 
+type Step = 1 | 2 | 3;
+
 export default function ReservationPage() {
+  const [step, setStep] = useState<Step>(1);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -24,6 +27,7 @@ export default function ReservationPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [reservationId, setReservationId] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +35,20 @@ export default function ReservationPage() {
     setError("");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      setSubmitted(true);
+      const response = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setReservationId(data.reservation.id);
+        setSubmitted(true);
+      } else {
+        setError(data.error || 'Failed to create reservation');
+      }
     } catch (err) {
       setError("Something went wrong. Please try again.");
     } finally {
@@ -59,15 +75,20 @@ export default function ReservationPage() {
           <h2 className="font-heading text-3xl font-bold text-[#F5F0E8] mb-4">
             Reservation Confirmed!
           </h2>
-          <p className="text-[#A0A0A0] mb-6">
-            Thank you, {formData.name}! Your table for {formData.guests} guests on {formData.date} at {formTime(formData.time)} has been reserved.
+          <div className="bg-[#1A1A1A] rounded-lg p-4 mb-6">
+            <p className="text-[#A0A0A0] text-sm">Booking ID</p>
+            <p className="text-[#C9A84C] text-xl font-bold">{reservationId}</p>
+          </div>
+          <p className="text-[#A0A0A0] mb-4">
+            Thank you, {formData.name}! Your table for {formData.guests} guests on {formData.date} at {formData.time} has been reserved.
           </p>
           <p className="text-[#A0A0A0] text-sm mb-8">
-            A confirmation has been sent to {formData.email} and {formData.phone}.
+            Confirmation sent to {formData.email} and {formData.phone}
           </p>
           <button
             onClick={() => {
               setSubmitted(false);
+              setStep(1);
               setFormData({
                 name: "",
                 email: "",
@@ -103,6 +124,29 @@ export default function ReservationPage() {
             Book your table at Le Privé and experience fine dining at its best
           </p>
         </motion.div>
+
+        <div className="flex justify-center mb-8">
+          <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-2 ${step >= 1 ? 'text-[#C9A84C]' : 'text-[#A0A0A0]'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-[#C9A84C] text-[#0D0D0D]' : 'bg-[#1A1A1A]'}`}>
+                {step > 1 ? <CheckCircle className="w-5 h-5" /> : '1'}
+              </div>
+              <span className="hidden sm:inline">Details</span>
+            </div>
+            <div className="w-8 h-0.5 bg-[#A0A0A0]"></div>
+            <div className={`flex items-center gap-2 ${step >= 2 ? 'text-[#C9A84C]' : 'text-[#A0A0A0]'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-[#C9A84C] text-[#0D0D0D]' : 'bg-[#1A1A1A]'}`}>
+                {step > 2 ? <CheckCircle className="w-5 h-5" /> : '2'}
+              </div>
+              <span className="hidden sm:inline">Payment</span>
+            </div>
+            <div className="w-8 h-0.5 bg-[#A0A0A0]"></div>
+            <div className={`flex items-center gap-2 ${step >= 3 ? 'text-[#C9A84C]' : 'text-[#A0A0A0]'}`}>
+              <div className="w-8 h-8 rounded-full bg-[#1A1A1A] flex items-center justify-center">3</div>
+              <span className="hidden sm:inline">Confirm</span>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           <motion.div
@@ -145,143 +189,206 @@ export default function ReservationPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <form onSubmit={handleSubmit} className="bg-[#1A1A1A] rounded-lg p-8">
-              <h2 className="font-heading text-2xl font-semibold text-[#F5F0E8] mb-6">
-                Book Your Table
-              </h2>
+            {step === 1 && (
+              <form onSubmit={(e) => { e.preventDefault(); setStep(2); }} className="bg-[#1A1A1A] rounded-lg p-8">
+                <h2 className="font-heading text-2xl font-semibold text-[#F5F0E8] mb-6">
+                  Book Your Table - Step 1
+                </h2>
 
-              {error && (
-                <div className="mb-6 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
-                  {error}
-                </div>
-              )}
+                {error && (
+                  <div className="mb-6 p-4 bg-red-500/20 border border-red-500 rounded-lg text-red-400">
+                    {error}
+                  </div>
+                )}
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                    <User className="w-4 h-4 text-[#C9A84C]" />
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C]"
-                    placeholder="Your name"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-6">
                   <div>
                     <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-[#C9A84C]" />
-                      Email
+                      <User className="w-4 h-4 text-[#C9A84C]" />
+                      Name
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       required
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C]"
-                      placeholder="your@email.com"
+                      placeholder="Your name"
                     />
                   </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-[#C9A84C]" />
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C]"
+                        placeholder="your@email.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-[#C9A84C]" />
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C]"
+                        placeholder="+91 98765 43210"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#C9A84C]" />
+                        Date
+                      </label>
+                      <input
+                        type="date"
+                        required
+                        min={getMinDate()}
+                        value={formData.date}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C] [&::-webkit-calendar-picker-indicator]:invert"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#C9A84C]" />
+                        Time
+                      </label>
+                      <select
+                        required
+                        value={formData.time}
+                        onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C]"
+                      >
+                        <option value="">Select time</option>
+                        {timeSlots.map((slot) => (
+                          <option key={slot} value={slot}>{slot}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#C9A84C]" />
+                        Guests
+                      </label>
+                      <select
+                        required
+                        value={formData.guests}
+                        onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C]"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                          <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                      <Phone className="w-4 h-4 text-[#C9A84C]" />
-                      Phone
+                    <label className="block text-[#F5F0E8] mb-2">
+                      Special Requests (Optional)
                     </label>
-                    <input
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C]"
-                      placeholder="+91 98765 43210"
+                    <textarea
+                      rows={3}
+                      value={formData.specialRequests}
+                      onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
+                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C] resize-none"
+                      placeholder="Any dietary requirements or special occasions..."
                     />
+                  </div>
+
+                  <button type="submit" className="w-full btn-primary py-4">
+                    Continue to Payment →
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {step === 2 && (
+              <div className="bg-[#1A1A1A] rounded-lg p-8">
+                <h2 className="font-heading text-2xl font-semibold text-[#F5F0E8] mb-6">
+                  Payment - ₹200 Advance
+                </h2>
+
+                <div className="bg-[#0D0D0D] rounded-lg p-6 mb-6">
+                  <h3 className="text-[#F5F0E8] font-semibold mb-4">Booking Summary</h3>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="text-[#A0A0A0]">Name</span><span className="text-[#F5F0E8]">{formData.name}</span></div>
+                    <div className="flex justify-between"><span className="text-[#A0A0A0]">Date</span><span className="text-[#F5F0E8]">{formData.date}</span></div>
+                    <div className="flex justify-between"><span className="text-[#A0A0A0]">Time</span><span className="text-[#F5F0E8]">{formData.time}</span></div>
+                    <div className="flex justify-between"><span className="text-[#A0A0A0]">Guests</span><span className="text-[#F5F0E8]">{formData.guests}</span></div>
+                    <div className="border-t border-[#C9A84C]/20 pt-2 mt-2">
+                      <div className="flex justify-between font-semibold"><span className="text-[#F5F0E8]">Advance Payment</span><span className="text-[#C9A84C]">₹200</span></div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#C9A84C]" />
-                      Date
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      min={getMinDate()}
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C] [&::-webkit-calendar-picker-indicator]:invert"
-                    />
+                <div className="space-y-4">
+                  <div className="p-4 border border-[#C9A84C]/20 rounded-lg cursor-pointer hover:border-[#C9A84C] transition-colors">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-5 h-5 text-[#C9A84C]" />
+                      <span className="text-[#F5F0E8]">Pay with Card (Razorpay)</span>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-[#C9A84C]" />
-                      Time
-                    </label>
-                    <select
-                      required
-                      value={formData.time}
-                      onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C]"
-                    >
-                      <option value="">Select time</option>
-                      {timeSlots.map((slot) => (
-                        <option key={slot} value={slot}>{slot}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[#F5F0E8] mb-2 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#C9A84C]" />
-                      Guests
-                    </label>
-                    <select
-                      required
-                      value={formData.guests}
-                      onChange={(e) => setFormData({ ...formData, guests: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] focus:outline-none focus:border-[#C9A84C]"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                        <option key={num} value={num}>{num} {num === 1 ? 'Guest' : 'Guests'}</option>
-                      ))}
-                    </select>
-                  </div>
+
+                  <button
+                    onClick={() => setStep(3)}
+                    className="w-full btn-primary py-4 flex items-center justify-center gap-2"
+                  >
+                    <CreditCard className="w-5 h-5" />
+                    Pay ₹200 & Confirm
+                  </button>
+
+                  <button
+                    onClick={() => setStep(1)}
+                    className="w-full text-[#A0A0A0] hover:text-[#F5F0E8] text-sm"
+                  >
+                    ← Back to Details
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <form onSubmit={handleSubmit} className="bg-[#1A1A1A] rounded-lg p-8">
+                <h2 className="font-heading text-2xl font-semibold text-[#F5F0E8] mb-6">
+                  Confirming Your Reservation...
+                </h2>
+
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-12 h-12 text-[#C9A84C] animate-spin" />
                 </div>
 
-                <div>
-                  <label className="block text-[#F5F0E8] mb-2">
-                    Special Requests (Optional)
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={formData.specialRequests}
-                    onChange={(e) => setFormData({ ...formData, specialRequests: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#0D0D0D] border border-[#C9A84C]/20 rounded-lg text-[#F5F0E8] placeholder-[#A0A0A0] focus:outline-none focus:border-[#C9A84C] resize-none"
-                    placeholder="Any dietary requirements or special occasions..."
-                  />
-                </div>
+                <p className="text-center text-[#A0A0A0] mb-6">
+                  Processing your payment and booking...
+                </p>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full btn-primary py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="hidden"
                 >
-                  {isSubmitting ? "Processing..." : "Confirm Reservation"}
+                  {isSubmitting ? "Processing..." : "Confirm"}
                 </button>
-              </div>
-            </form>
+              </form>
+            )}
           </motion.div>
         </div>
       </div>
     </div>
   );
-}
-
-function formTime(time: string) {
-  return time;
 }
