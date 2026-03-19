@@ -202,21 +202,25 @@ export default function Home() {
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {categories.map((cat) => (
-              <motion.div
-                key={cat.id}
-                variants={item}
-                className="group relative overflow-hidden rounded-lg cursor-pointer"
-              >
-                <div className="aspect-[16/9] bg-[#1A1A1A] relative flex items-center justify-center">
-                  <span className="text-6xl">{cat.icon}</span>
-                  <div className="absolute inset-0 bg-[#C9A84C]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h3 className="font-heading text-3xl font-bold text-[#F5F0E8] group-hover:scale-110 transition-transform">
-                    {cat.name}
-                  </h3>
-                </div>
-              </motion.div>
+              <Link key={cat.id} href={`/menu?category=${cat.name}`}>
+                <motion.div
+                  variants={item}
+                  className="group relative overflow-hidden rounded-lg cursor-pointer gold-border hover:bg-[#C9A84C]/10 transition-all"
+                >
+                  <div className="aspect-[16/9] bg-[#1A1A1A] relative flex items-center justify-center">
+                    <span className="text-6xl">{cat.icon}</span>
+                    <div className="absolute inset-0 bg-[#C9A84C]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h3 className="font-heading text-3xl font-bold text-[#F5F0E8] group-hover:scale-110 transition-transform">
+                      {cat.name}
+                    </h3>
+                  </div>
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowRight className="w-6 h-6 text-[#C9A84C]" />
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </motion.div>
         </div>

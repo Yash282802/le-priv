@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Filter, Leaf, Star, Plus, Minus, ShoppingBag } from "lucide-react";
 import { menuItems, MenuItem } from "@/data/menu";
@@ -11,11 +12,19 @@ const allCategories = ["All", "Soups", "Salads", "Starters"];
 const subcategories = ["All", "Tandoori", "Italian", "World"];
 
 export default function MenuPage() {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [subcategory, setSubcategory] = useState("All");
   const [showJainOnly, setShowJainOnly] = useState(false);
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([]);
+
+  useEffect(() => {
+    const catParam = searchParams.get("category");
+    if (catParam && allCategories.includes(catParam)) {
+      setCategory(catParam);
+    }
+  }, [searchParams]);
 
   const filteredItems = menuItems.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(search.toLowerCase());
